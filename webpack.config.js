@@ -15,7 +15,10 @@ const questions = [
     type: 'list',
     name: 'option',
     message: 'Please select the option you want to run: ',
-    choices: ['option1', 'option2'],
+    choices: [ 
+      { name: "[1] DoubleClick Campaign Manager - Includes Click Tag Links", value: "option1" },
+      { name: "[2] DoubleClick Studio - Includes Enabler.js and Exit Links", value: "option2" }
+    ]
   },
 ];
 
@@ -28,7 +31,9 @@ function promptAsync(questions) {
 
 
 function createConfig(selectedOption) {
-  console.log(`Selected option: ${selectedOption} \nPlease wait... \n`);
+  // const selectedText = questions[0].choices.find(choice => choice.value === selectedOption).name;
+  // console.log(`Selected option: ${selectedText} \nPlease wait... \n`);
+  console.log(`\nPlease wait... \n`);
 
   const jsPath = path.resolve(__dirname, 'src', 'js', selectedOption)
   const scssPath = path.resolve(__dirname, 'src', 'scss', selectedOption)
