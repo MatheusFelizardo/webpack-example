@@ -37,7 +37,9 @@ function createConfig(selectedOption) {
   const jsPath = path.resolve(__dirname, 'src', 'js', selectedOption)
   const scssPath = path.resolve(__dirname, 'src', 'scss', selectedOption)
 
-  // Just in case you add an option to promp that doesn't exist
+  // Just in case you add an option to promp that doesn't exist, like { name: "[3] Example text", value: "option3" }
+  // There is no option3 folder, so we need to check if the path exists
+  
   const isJsPathValid = fs.existsSync(jsPath) 
   const isScssPathValid = fs.existsSync(scssPath);
   
