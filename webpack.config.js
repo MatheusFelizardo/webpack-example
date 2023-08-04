@@ -1,9 +1,19 @@
 const path = require('path');
 const fs = require('fs');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const inquirer = require('inquirer');
+
+// webpack plugins
+const HtmlWebpackPlugin = require('html-webpack-plugin'); // https://webpack.js.org/plugins/html-webpack-plugin/
+const MiniCssExtractPlugin = require('mini-css-extract-plugin'); // https://webpack.js.org/plugins/mini-css-extract-plugin/
+const { CleanWebpackPlugin } = require('clean-webpack-plugin'); // https://webpack.js.org/plugins/clean-webpack-plugin/
+const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin'); // https://webpack.js.org/plugins/image-minimizer-webpack-plugin/
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin"); // https://webpack.js.org/plugins/css-minimizer-webpack-plugin/
+const CopyPlugin = require('copy-webpack-plugin'); // https://webpack.js.org/plugins/copy-webpack-plugin/
+const TerserPlugin = require('terser-webpack-plugin'); // https://webpack.js.org/plugins/terser-webpack-plugin/
+
+// third party libraries
+const inquirer = require('inquirer'); // https://www.npmjs.com/package/inquirer
+
+// tasks
 const { jsParser } = require('./tasks/jsParser');
 const { sassParser } = require('./tasks/sassParser');
 
@@ -53,6 +63,8 @@ function createConfig(selectedOption) {
     process.exit(1);
   }
 
+  const imagesPath = path.resolve(__dirname, 'src', 'img', selectedOption);
+  const imagesOutputPath = path.resolve(__dirname, 'dist', 'img', selectedOption);
 
   const config = {
     entry: [
@@ -74,9 +86,32 @@ function createConfig(selectedOption) {
         new MiniCssExtractPlugin({
             filename: `css/${selectedOption}.css`,
         }),
+        new ImageMinimizerPlugin({
+          test: /\.(jpe?g|png|gif|svg)$/i,
+          include: imagesPath,
+          minimizer: {
+            implementation: ImageMinimizerPlugin.squooshMinify,
+            options: {},
+          },
+        }),
+        new CopyPlugin({
+          patterns: [
+            {
+              from: imagesPath,
+              to: imagesOutputPath, // Diretório de saída das imagens processadas
+              globOptions: {
+                ignore: ['*.DS_Store'], // Opcional: ignore arquivos específicos
+              },
+            },
+          ],
+        }),
     ],
     module: {
       rules: [
+        {
+          test: /\.(jpe?g|png|gif|svg)$/i,
+          type: "asset",
+        },
         {
             test: /\.s[ac]ss$/i,
             use: [
@@ -85,6 +120,23 @@ function createConfig(selectedOption) {
                 'sass-loader'
             ],
         },
+      ],
+    },
+    optimization: {
+      minimizer: [
+        new CssMinimizerPlugin(), // responsible for minifying the css
+        new ImageMinimizerPlugin({
+          minimizer: {
+            implementation: ImageMinimizerPlugin.squooshMinify
+          },
+        }), // responsible for minifying the images
+        new TerserPlugin({
+          terserOptions: {
+            format: {
+              comments: false, 
+            },
+          },
+        }), // responsible for minifying the js
       ],
     },
     mode: isProduction ? 'production' : 'development',
