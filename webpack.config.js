@@ -10,6 +10,9 @@ const CssMinimizerPlugin = require("css-minimizer-webpack-plugin"); // https://w
 const CopyPlugin = require('copy-webpack-plugin'); // https://webpack.js.org/plugins/copy-webpack-plugin/
 const TerserPlugin = require('terser-webpack-plugin'); // https://webpack.js.org/plugins/terser-webpack-plugin/
 
+// custom plugins
+const PreloadCSSPlugin = require('./plugins/PreloadCSSPlugin'); 
+
 // third party libraries
 const inquirer = require('inquirer'); // https://www.npmjs.com/package/inquirer
 
@@ -29,6 +32,24 @@ const questions = [
       { name: "[2] DoubleClick Studio - Includes Enabler.js and Exit Links", value: "option2" }
     ]
   },
+  {
+    type: 'list',
+    name: 'preload',
+    message: 'Use pre-load css?',
+    choices: [ 
+      { name: "[1] Yes", value: true },
+      { name: "[2] No", value: false }
+    ]
+  },
+  {
+    type: 'list',
+    name: 'minify',
+    message: 'Minify files?',
+    choices: [ 
+      { name: "[1] Yes", value: true },
+      { name: "[2] No", value: false }
+    ]
+  },
 ];
 
 // We create a promise to wait for the user response to run the webpack
@@ -39,7 +60,7 @@ function promptAsync(questions) {
   }
 
 
-function createConfig(selectedOption) {
+function createConfig(selectedOption, selectedPreload, selectedMinify) {
   // const selectedText = questions[0].choices.find(choice => choice.value === selectedOption).name;
   // console.log(`Selected option: ${selectedText} \nPlease wait... \n`);
   console.log(`\nPlease wait... \n`);
@@ -80,11 +101,12 @@ function createConfig(selectedOption) {
         new HtmlWebpackPlugin({
             template: `./src/html/${selectedOption}/index.html`,
             filename: `index.html`,
-            minify: true,
+            minify: selectedMinify,
             inject: true
         }),
         new MiniCssExtractPlugin({
             filename: `css/${selectedOption}.css`,
+            // filename: `css/${selectedOption}.[contenthash].css` // Enable unique hash for file and cash busting for css files by webpack
         }),
         new ImageMinimizerPlugin({
           test: /\.(jpe?g|png|gif|svg)$/i,
@@ -98,13 +120,14 @@ function createConfig(selectedOption) {
           patterns: [
             {
               from: imagesPath,
-              to: imagesOutputPath, // Diretório de saída das imagens processadas
+              to: imagesOutputPath, // Processed images will be copied to this path
               globOptions: {
-                ignore: ['*.DS_Store'], // Opcional: ignore arquivos específicos
+                ignore: ['*.DS_Store'], 
               },
             },
           ],
         }),
+        selectedPreload ? new PreloadCSSPlugin() : null, 
     ],
     module: {
       rules: [
@@ -124,19 +147,19 @@ function createConfig(selectedOption) {
     },
     optimization: {
       minimizer: [
-        new CssMinimizerPlugin(), // responsible for minifying the css
-        new ImageMinimizerPlugin({
+        selectedMinify ? new CssMinimizerPlugin() : null, // responsible for minifying the css
+        selectedMinify ? new ImageMinimizerPlugin({
           minimizer: {
             implementation: ImageMinimizerPlugin.squooshMinify
           },
-        }), // responsible for minifying the images
-        new TerserPlugin({
+        }) : null, // responsible for minifying the images
+        selectedMinify ? new TerserPlugin({
           terserOptions: {
             format: {
               comments: false, 
             },
           },
-        }), // responsible for minifying the js
+        }) : null, // responsible for minifying the js
       ],
     },
     mode: isProduction ? 'production' : 'development',
@@ -153,10 +176,11 @@ function createConfig(selectedOption) {
 
 module.exports = async (env) => {
     const answers = await promptAsync(questions);
-
     // After the promise is resolved, we continue the execution
     const selectedOption = answers.option;
-    const selectedConfig = createConfig(selectedOption);
+    const selectedPreload = answers.preload;
+    const selectedMinify = answers.minify;
+    const selectedConfig = createConfig(selectedOption, selectedPreload, selectedMinify);
   
     return selectedConfig;
   };
