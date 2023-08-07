@@ -70,8 +70,6 @@ function promptAsync(questions) {
 
 
 function createConfig(selectedOption, selectedPreload, selectedMinify, selectedCache) {
-  // const selectedText = questions[0].choices.find(choice => choice.value === selectedOption).name;
-  // console.log(`Selected option: ${selectedText} \nPlease wait... \n`);
   console.log(`\nPlease wait... \n`);
 
   const jsPath = path.resolve(__dirname, 'src', 'js', selectedOption)
