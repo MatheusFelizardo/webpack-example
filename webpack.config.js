@@ -115,7 +115,6 @@ function createConfig(selectedOption, selectedPreload, selectedMinify, selectedC
         }),
         new MiniCssExtractPlugin({
             filename: selectedCache ? `css/${selectedOption}.[contenthash].css` : `css/${selectedOption}.css`,
-            // filename: `css/${selectedOption}.[contenthash].css` // Enable unique hash for file and cash busting for css files by webpack
         }),
         new ImageMinimizerPlugin({
           test: /\.(jpe?g|png|gif|svg)$/i,
