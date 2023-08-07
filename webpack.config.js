@@ -43,6 +43,15 @@ const questions = [
   },
   {
     type: 'list',
+    name: 'cache',
+    message: 'Active cache busting?',
+    choices: [ 
+      { name: "[1] Yes", value: true },
+      { name: "[2] No", value: false }
+    ]
+  },
+  {
+    type: 'list',
     name: 'minify',
     message: 'Minify files?',
     choices: [ 
@@ -60,7 +69,7 @@ function promptAsync(questions) {
   }
 
 
-function createConfig(selectedOption, selectedPreload, selectedMinify) {
+function createConfig(selectedOption, selectedPreload, selectedMinify, selectedCache) {
   // const selectedText = questions[0].choices.find(choice => choice.value === selectedOption).name;
   // console.log(`Selected option: ${selectedText} \nPlease wait... \n`);
   console.log(`\nPlease wait... \n`);
@@ -93,7 +102,7 @@ function createConfig(selectedOption, selectedPreload, selectedMinify) {
         ...sassParser(scssPath)
     ],  
     output: {
-        filename: `js/${selectedOption}.js`,
+        filename: selectedCache ? `js/${selectedOption}.[contenthash].js` : `js/${selectedOption}.js`,
         path: path.resolve(__dirname, 'dist'),
     },
     plugins: [
@@ -105,7 +114,7 @@ function createConfig(selectedOption, selectedPreload, selectedMinify) {
             inject: true
         }),
         new MiniCssExtractPlugin({
-            filename: `css/${selectedOption}.css`,
+            filename: selectedCache ? `css/${selectedOption}.[contenthash].css` : `css/${selectedOption}.css`,
             // filename: `css/${selectedOption}.[contenthash].css` // Enable unique hash for file and cash busting for css files by webpack
         }),
         new ImageMinimizerPlugin({
@@ -179,8 +188,9 @@ module.exports = async (env) => {
     // After the promise is resolved, we continue the execution
     const selectedOption = answers.option;
     const selectedPreload = answers.preload;
+    const selectedCache = answers.cache;
     const selectedMinify = answers.minify;
-    const selectedConfig = createConfig(selectedOption, selectedPreload, selectedMinify);
+    const selectedConfig = createConfig(selectedOption, selectedPreload, selectedMinify, selectedCache);
   
     return selectedConfig;
   };
